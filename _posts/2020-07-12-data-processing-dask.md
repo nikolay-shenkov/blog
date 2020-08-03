@@ -3,7 +3,7 @@ toc: true
 layout: post
 description: I share some of my initial takeaways on working with Dask for distributed processing.
 categories: [markdown]
-title: Distributed data processing with Dask: lessons learned
+title: "Distributed data processing with Dask: lessons learned"
 ---
 
 
