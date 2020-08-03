@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Distributed data processing with Dask: lessons learned | Nikolay’s blog</title>
+<meta name="generator" content="Jekyll v4.0.0" />
+<meta property="og:title" content="Distributed data processing with Dask: lessons learned" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="I share some of my initial takeaways on working with Dask for distributed processing." />
+<meta property="og:description" content="I share some of my initial takeaways on working with Dask for distributed processing." />
+<link rel="canonical" href="https://nikolay-shenkov.github.io/blog/markdown/2020/07/12/data-processing-dask.html" />
+<meta property="og:url" content="https://nikolay-shenkov.github.io/blog/markdown/2020/07/12/data-processing-dask.html" />
+<meta property="og:site_name" content="Nikolay’s blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-07-12T00:00:00-05:00" />
+<script type="application/ld+json">
+{"description":"I share some of my initial takeaways on working with Dask for distributed processing.","@type":"BlogPosting","headline":"Distributed data processing with Dask: lessons learned","dateModified":"2020-07-12T00:00:00-05:00","datePublished":"2020-07-12T00:00:00-05:00","url":"https://nikolay-shenkov.github.io/blog/markdown/2020/07/12/data-processing-dask.html","mainEntityOfPage":{"@type":"WebPage","@id":"https://nikolay-shenkov.github.io/blog/markdown/2020/07/12/data-processing-dask.html"},"@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/blog/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nikolay-shenkov.github.io/blog/feed.xml" title="Nikolay's blog" /><!-- the google_analytics_id gets auto inserted from the config file -->
+
+
+
+<script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create','UA-173016041-1','auto');ga('require','displayfeatures');ga('send','pageview');</script>
+
+<link rel="shortcut icon" type="image/x-icon" href="/blog/images/favicon.ico"><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Distributed data processing with Dask: lessons learned | Nikolay’s blog</title>
+<meta name="generator" content="Jekyll v4.0.0" />
+<meta property="og:title" content="Distributed data processing with Dask: lessons learned" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="I share some of my initial takeaways on working with Dask for distributed processing." />
+<meta property="og:description" content="I share some of my initial takeaways on working with Dask for distributed processing." />
+<link rel="canonical" href="https://nikolay-shenkov.github.io/blog/markdown/2020/07/12/data-processing-dask.html" />
+<meta property="og:url" content="https://nikolay-shenkov.github.io/blog/markdown/2020/07/12/data-processing-dask.html" />
+<meta property="og:site_name" content="Nikolay’s blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2020-07-12T00:00:00-05:00" />
+<script type="application/ld+json">
+{"description":"I share some of my initial takeaways on working with Dask for distributed processing.","@type":"BlogPosting","headline":"Distributed data processing with Dask: lessons learned","dateModified":"2020-07-12T00:00:00-05:00","datePublished":"2020-07-12T00:00:00-05:00","url":"https://nikolay-shenkov.github.io/blog/markdown/2020/07/12/data-processing-dask.html","mainEntityOfPage":{"@type":"WebPage","@id":"https://nikolay-shenkov.github.io/blog/markdown/2020/07/12/data-processing-dask.html"},"@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+<link href="https://unpkg.com/@primer/css/dist/primer.css" rel="stylesheet" />
+<link rel="stylesheet" href="//use.fontawesome.com/releases/v5.0.7/css/all.css"><link type="application/atom+xml" rel="alternate" href="https://nikolay-shenkov.github.io/blog/feed.xml" title="Nikolay's blog" /><!-- the google_analytics_id gets auto inserted from the config file -->
+
+
+
+<script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create','UA-173016041-1','auto');ga('require','displayfeatures');ga('send','pageview');</script>
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" integrity="sha384-zB1R0rpPzHqg7Kpt0Aljp8JPLqbXI3bhnPWROx27a9N0Ll6ZP/+DiW/UqRcLbRjq" crossorigin="anonymous">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"> </script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js" integrity="sha384-y23I5Q6l+B6vatafAwxRu/0oK/79VlbSz7Q9aiSZUvyWYIYsd+qj+o24G5ZU2zJz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js" integrity="sha384-kWPLUVMOks5AQFrykwIup5lo0m3iMkkHrD0uJ4H5cjeGihAutqP0yW0J6dpFiVkI" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/blog/">Nikolay&#39;s blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/blog/about/">About Me</a><a class="page-link" href="/blog/search/">Search</a><a class="page-link" href="/blog/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Distributed data processing with Dask: lessons learned</h1><p class="page-description">I share some of my initial takeaways on working with Dask for distributed processing.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2020-07-12T00:00:00-05:00" itemprop="datePublished">
+        Jul 12, 2020
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      9 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/blog/categories/#markdown">markdown</a>
+        
+      
+      </p>
+    
+
+    </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul class="section-nav">
+<li class="toc-entry toc-h1"><a href="#distributed-data-processing-with-dask-lessons-learned">Distributed data processing with Dask: lessons learned</a>
+<ul>
+<li class="toc-entry toc-h2"><a href="#why-dask">Why Dask?</a></li>
+<li class="toc-entry toc-h2"><a href="#aws-setup">AWS Setup</a></li>
+<li class="toc-entry toc-h2"><a href="#the-dataset">The Dataset</a></li>
+<li class="toc-entry toc-h2"><a href="#lessons-learned">Lessons Learned</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#dask-bag-for-semi-structured-data">Dask Bag for semi-structured data</a></li>
+<li class="toc-entry toc-h3"><a href="#the-storage-io-bottleneck">The Storage IO bottleneck</a></li>
+<li class="toc-entry toc-h3"><a href="#dask-dataframes-api--pandas-api">Dask DataFrames API != Pandas API</a></li>
+<li class="toc-entry toc-h3"><a href="#dask-ml">Dask-ML</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#final-thoughts">Final thoughts</a></li>
+<li class="toc-entry toc-h2"><a href="#references-and-resources">References and Resources</a></li>
+</ul>
+</li>
+</ul><h1 id="distributed-data-processing-with-dask-lessons-learned">
+<a class="anchor" href="#distributed-data-processing-with-dask-lessons-learned" aria-hidden="true"><span class="octicon octicon-link"></span></a>Distributed data processing with Dask: lessons learned</h1>
+
+<p>This post is aimed at people who are experienced with the Python data analysis toolkit, and are looking for solutions to scale out their workflows. It is not meant to be an “Intro to Dask” tutorial. Instead, I share some of my initial takeaways on working with Dask.</p>
+
+<h2 id="why-dask">
+<a class="anchor" href="#why-dask" aria-hidden="true"><span class="octicon octicon-link"></span></a>Why Dask?</h2>
+
+<p>My coworkers know that I love pandas (the data analysis library, although the folivore bear is not bad, either). It allows for interactive analysis of heterogeneous datasets, making it the workhorse of data science. But when the size of the DataFrame exceeds a few GBs, Pandas starts to struggle. There are techniques for handling large datasets with Pandas, such as reading data in chunks and using categorical variables. Sometimes, however, we can’t get away with these tricks, and a distributed solution is needed.</p>
+
+<p>Dask is a distributed computing library written in Python. It includes data collections such as Dask DataFrame and Dask Array, which implement many of the familiar APIs. Operations on Dask collections create a task graph, where each node is a Python function (a task), and data flows from one task to the next. A scheduler then executes the task graph, possibly by making use of parallel computations. Dask includes both a single-machine, and a distributed scheduler, so it is easy to get started on a laptop. Under the hood it uses Numpy and Pandas to execute the actual task computations: a Dask DataFrame is a collection of Pandas dataframes.</p>
+
+<p><img src="/blog/images/dask_dataframe.png" alt="" title="Left: A Dask DataFrame with 20M rows partitioned along the rows into 4 Pandas DataFrames. Right: An aggregation operation on the DataFrame datetime index, and the resulting tasks (running using 4 workers on my laptop). Colors denote the different types of tasks, e.g. groupby-sum, dt-hour."></p>
+
+<p>I decided to try out Dask in a distributed environment, so I followed the instructions on setting up a small Dask cluster on AWS as described in Chapter 11 from <a href="https://livebook.manning.com/book/data-science-at-scale-with-python-and-Dask/chapter-11/7">Data Science at Scale with Python and Dask</a>. The main task for this chapter is to preprocess a dataset (Amazon Fine Foods reviews) using Dask, and develop a bag-of-words model to classify the reviews into positive and negative based on the review text. I implemented my own data pipeline and model using Dask; below are some of the lessons learned along the way.</p>
+
+<h2 id="aws-setup">
+<a class="anchor" href="#aws-setup" aria-hidden="true"><span class="octicon octicon-link"></span></a>AWS Setup</h2>
+
+<p>Here is an overview of the AWS cluster recipe. For detailed instructions on setting it up, refer to the book.</p>
+
+<ol>
+  <li>A total of 8 EC2 instances: 6 workers, 1 scheduler, 1 notebook server. Note that the <code class="highlighter-rouge">t2.micro</code> instances are available in the free tier.</li>
+  <li>Docker images for the scheduler, worker, and notebook server deployed using Elastic Container Registry. It is important to ensure all instances are able to communicate with each other, and that we are able to connect to the notebook server, and the scheduler dashboard.</li>
+  <li>Elastic File System to store the dataset, so that all instances have access to it.</li>
+</ol>
+
+<h2 id="the-dataset">
+<a class="anchor" href="#the-dataset" aria-hidden="true"><span class="octicon octicon-link"></span></a>The Dataset</h2>
+
+<p>The dataset includes about half a million reviews of fine foods on Amazon, and can be downloaded from the Stanford <a href="https://snap.stanford.edu/data/web-FineFoods.html">SNAP page</a>. Here is an example review, with only the relevant fields included:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>product/productId: B00813GRG4
+review/helpfulness: 0/0
+review/score: 1.0
+review/summary: Not as Advertised
+review/text: Product arrived labeled as Jumbo Salted Peanuts...the peanuts were actually 
+small sized unsalted. Not sure if this was an error or if the vendor intended to represent 
+the product as "Jumbo".
+</code></pre></div></div>
+
+<p>One cannot help but feel sympathetic for those who have to face the blight of unsalted, small-sized peanuts.</p>
+
+<h2 id="lessons-learned">
+<a class="anchor" href="#lessons-learned" aria-hidden="true"><span class="octicon octicon-link"></span></a>Lessons Learned</h2>
+
+<h3 id="dask-bag-for-semi-structured-data">
+<a class="anchor" href="#dask-bag-for-semi-structured-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Dask Bag for semi-structured data</h3>
+
+<p>Semi-structured data like the reviews above or application logs does not conform neatly to a tabular format, so it cannot be loaded directly into a DataFrame or an Array. A <a href="https://docs.Dask.org/en/latest/bag.html">Dask Bag</a> is a collection of Python objects, so it provides more flexibility when dealing with nested structures or irregular items, which can be modelled using lists or dictionaries. The Bag API exposes <code class="highlighter-rouge">map</code>, <code class="highlighter-rouge">filter</code> and other operations which can be used to normalize the data; once this is done, we can convert the Bag to a DataFrame for more intensive numerical transformations or analysis. This is in analogy with how we might use Python dictionaries and lists to transform a raw dataset, before creating a Pandas DataFrame out of it. The key difference is that operations on the Dask bag can be executed in parallel, and on data that does not fit into memory. For example, my initial pipeline for the Reviews dataset was as follows:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">reviews</span> <span class="o">=</span> <span class="p">(</span><span class="n">bag</span><span class="o">.</span><span class="n">from_sequence</span><span class="p">(</span><span class="n">locations</span><span class="p">)</span>
+              <span class="o">.</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">loc</span><span class="p">:</span> <span class="n">load_item_text</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="o">*</span><span class="n">loc</span><span class="p">)</span>
+              <span class="o">.</span><span class="nb">map</span><span class="p">(</span><span class="n">parse_item</span><span class="p">)</span>
+              <span class="o">.</span><span class="n">to_dataframe</span><span class="p">(</span><span class="n">dtypes</span><span class="p">))</span>
+</code></pre></div></div>
+
+<p>The input to this pipeline is a sequence of <code class="highlighter-rouge">(start, end)</code> locations, specified as the number of bytes from the file start, extracted in a previous step. The <code class="highlighter-rouge">load_item_text</code> will be applied on each location tuple: it will load the corresponding text from the file - more on that later. At this point, we have a bag of text items. The <code class="highlighter-rouge">parse_item</code> would then convert the text into a usable data structure - I won’t go into the specifics here. The <code class="highlighter-rouge">to_dataframe</code> method creates a Dask DataFrame from the transformed bag. Because of the lazy evaluation of this pipeline, the DataFrame constructor cannot infer the data types of each field in the item so these need to be explicitly provided. More complex pipelines can be implemented by stringing together <code class="highlighter-rouge">map</code>, <code class="highlighter-rouge">filter</code>, and <code class="highlighter-rouge">fold</code> operations in a functional style.</p>
+
+<h3 id="the-storage-io-bottleneck">
+<a class="anchor" href="#the-storage-io-bottleneck" aria-hidden="true"><span class="octicon octicon-link"></span></a>The Storage IO bottleneck</h3>
+
+<p>Let’s go back to the <code class="highlighter-rouge">load_item_text</code> step from the previous section. My naive approach was the following:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">load_item_text</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s">'cp1252'</span><span class="p">):</span>
+    <span class="s">"""Load the text for a single review item using the start and end locations."""</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">'rb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">encoding</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>This function will be applied about half a milliion times (once for each review), and Dask will take care of distributing the tasks on separate workers. It took more than ten minutes to run the complete pipeline on the AWS cluster. Using the handy <a href="https://docs.Dask.org/en/latest/diagnostics-distributed.html">scheduler dashboard</a> I noticed that the workers spent most of their time in <code class="highlighter-rouge">load_item_text</code>. I realized there are possibly two issues with my initial approach:</p>
+
+<ul>
+  <li>The file needs to be opened and closed once per review</li>
+  <li>For each review we change the position of the file object using <code class="highlighter-rouge">f.seek()</code>. So each time it will start at <code class="highlighter-rouge">position=0</code> and move to <code class="highlighter-rouge">position=start</code>.</li>
+</ul>
+
+<p>To address these issues I updated my code to load a batch of items at once. The updated functions were as follows:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">load_item_text_2</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">encoding</span><span class="p">):</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">encoding</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">load_batch_items</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">batch_locs</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s">'cp1252'</span><span class="p">):</span>
+    <span class="s">"""Load a batch of item texts from a filename.
+    batch_locs is a list of (start, end) byte locations."""</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">'rb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">load_item_text_2</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">encoding</span><span class="p">)</span>
+                <span class="k">for</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span> <span class="ow">in</span> <span class="n">batch_locs</span><span class="p">]</span>
+</code></pre></div></div>
+
+<p>We now open the filename once per batch. The seek method is still there, but the file position does not need to reset to zero, as we are reading items sequentially, and the input locations are sorted.</p>
+
+<p>The modified pipeline now looks like this:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">locs_to_batches</span><span class="p">(</span><span class="n">locations</span><span class="p">,</span> <span class="n">bs</span><span class="o">=</span><span class="mi">5000</span><span class="p">):</span>
+    <span class="s">"""Convert the list of locations to batches of locations, of size bs."""</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">locations</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">bs</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">locations</span><span class="p">),</span> <span class="n">bs</span><span class="p">)]</span>
+
+<span class="n">reviews</span> <span class="o">=</span> <span class="p">(</span><span class="n">bag</span><span class="o">.</span><span class="n">from_sequence</span><span class="p">(</span><span class="n">locs_to_batches</span><span class="p">(</span><span class="n">locations</span><span class="p">))</span>
+              <span class="o">.</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">batch</span><span class="p">:</span> <span class="n">load_batch_items</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">batch</span><span class="p">))</span>
+              <span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+              <span class="o">.</span><span class="nb">map</span><span class="p">(</span><span class="n">parse_item</span><span class="p">)</span>
+              <span class="o">.</span><span class="n">to_dataframe</span><span class="p">(</span><span class="n">dtypes</span><span class="p">))</span>
+</code></pre></div></div>
+
+<p>This time we convert our locations to batches, and load each batch using <code class="highlighter-rouge">load_batch_items</code>. This produces a bag of batches of item texts, and we <code class="highlighter-rouge">flatten</code> it to obtain a bag of items. The rest of the pipeline is as before. This new pipeline takes 15 seconds to run, giving a speed-up factor of about 40!</p>
+
+<p>I suspect that many distributed processing tasks are limited by storage IO and network bandwidth. There are several optimized column-based storage formats such as <a href="https://examples.Dask.org/dataframes/01-data-access.html">Parquet</a> that work well with Dask.</p>
+
+<h3 id="dask-dataframes-api--pandas-api">
+<a class="anchor" href="#dask-dataframes-api--pandas-api" aria-hidden="true"><span class="octicon octicon-link"></span></a>Dask DataFrames API != Pandas API</h3>
+
+<p>The Dask DataFrame API implements a large subset of the Pandas API, but of course not all operations are supported. Some operations are not implemented because of the data model: Dask DataFrames are partitioned along the rows. Operations such as <code class="highlighter-rouge">transpose</code> cannot be implemented efficiently because that would require partitioning along columns as well.</p>
+
+<p>This also means that using some operations that <em>are implemented</em> requires more thought when using. For example, setting the DataFrame index can be costly because it might require shuffling data across partitions. However, it might be worth it if we later take advantage of the index to perform fast lookups. For example, for the reviews dataset, it might be worth to do <code class="highlighter-rouge">reviews.set_index('review_id')</code> if we plan on joining <code class="highlighter-rouge">reviews</code> with another table on <code class="highlighter-rouge">review_id</code>.</p>
+
+<h3 id="dask-ml">
+<a class="anchor" href="#dask-ml" aria-hidden="true"><span class="octicon octicon-link"></span></a>Dask-ML</h3>
+
+<p>Dask-ML builds on top of Dask arrays and provides implementations of scalable generalized linear models, among other models. It is designed to work well with scikit-learn. However, it is a relatively young library and some of the features are not fully implemented. For example, I could not get the Dask-ML logistic regression to work with Dask sparse matrices. Fortunately, even very large sparse matrices can be loaded in memory because of their efficient layout. This means we can use the logistic regression from scikit-learn directly. Here is an simple example with the Reviews dataset:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">dask_ml.feature_extraction.text</span> <span class="kn">import</span> <span class="n">HashingVectorizer</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LogisticRegression</span>
+
+<span class="n">vectorizer</span> <span class="o">=</span> <span class="n">HashingVectorizer</span><span class="p">(</span><span class="n">n_features</span><span class="o">=</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">x_train</span> <span class="o">=</span> <span class="n">vectorizer</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">reviews_train</span><span class="p">[</span><span class="s">'text'</span><span class="p">])</span>
+<span class="c1"># x_train is a Dask sparse array but no transformation has been done yet
+</span><span class="n">x_train</span> <span class="o">=</span> <span class="n">x_train</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>  <span class="c1"># actually do the transformations
+# x_train is now a Scipy sparse matrix
+</span><span class="n">lr</span> <span class="o">=</span> <span class="n">LogisticRegression</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="s">'saga'</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>I expect future versions of Dask-ML will provide even more features and interoperability with the rest of the Python ML ecosystem.</p>
+
+<h2 id="final-thoughts">
+<a class="anchor" href="#final-thoughts" aria-hidden="true"><span class="octicon octicon-link"></span></a>Final thoughts</h2>
+
+<p>When transitioning from a single-machine to a distributed setting, inevitably there are new practices to learn, and antipatterns to avoid. With Dask, this transition is relatively smooth: I appreciate that the library is transparant about its operations and that the workflow “remains native” in Python. This also means we can incorporate all the tried-and-tested visualization and ML libraries into our distributed data analysis.</p>
+
+<h2 id="references-and-resources">
+<a class="anchor" href="#references-and-resources" aria-hidden="true"><span class="octicon octicon-link"></span></a>References and Resources</h2>
+
+<ul>
+  <li><a href="https://livebook.manning.com/book/data-science-at-scale-with-python-and-Dask/chapter-11/7">Data Science at Scale with Python and Dask</a></li>
+  <li>
+<a href="https://www.youtube.com/watch?v=obKZzFRNTxo">Is Spark still relevant?</a> A comparison between Dask, Spark and Rapids. The main conclusion is that Dask is not behind Spark in terms of functionality, but enterprises still choose Spark because of the training options and support available (e.g. through consultancies) and institutional support.</li>
+  <li>
+<a href="https://github.com/dask/dask-tutorial/blob/master/01_dask.delayed.ipynb">Dask Delayed Notebook</a> This tutorial introduces <code class="highlighter-rouge">dask.delayed</code>, which can be used to parallelize computations that do not easily fit into the DataFrame / Array template.</li>
+</ul>
+
+
+  </div><a class="u-url" href="/blog/markdown/2020/07/12/data-processing-dask.html" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/blog/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/blog/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/blog/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>A blog about data science sprinkled with a bit of sarcasm.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/nikolay-shenkov" title="nikolay-shenkov"><svg class="svg-icon grey"><use xlink:href="/blog/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/Nikolay35559331" title="Nikolay35559331"><svg class="svg-icon grey"><use xlink:href="/blog/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
