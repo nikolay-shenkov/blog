@@ -17,25 +17,17 @@ This post is aimed at people who are experienced with the Python data analysis t
 
 My coworkers know that I love pandas (the data analysis library, although the folivore bear is not bad, either). It allows for interactive analysis of heterogeneous datasets, making it the workhorse of data science. But when the size of the DataFrame exceeds a few GBs, Pandas starts to struggle. There are techniques for handling large datasets with Pandas, such as reading data in chunks and using categorical variables. Sometimes, however, we can't get away with these tricks, and a distributed solution is needed. 
 
-Dask is a distributed computing library written in Python. It includes data collections such as Dask DataFrame and Dask Array, which implement many of the familiar APIs. Operations on Dask collections create a task graph, where each node is a Python function (a task), and data flows from one task to the next. A scheduler then executes the task graph, possibly by making use of parallel computations. Dask includes both a single-machine, and a distributed scheduler, so it is easy to get started on a laptop. 
-
-{% include info.html text="Under the hood it uses Numpy and Pandas to execute the actual task computations: a Dask DataFrame is a collection of Pandas dataframes." %}
+Dask is a distributed computing library written in Python. It includes data collections such as Dask DataFrame and Dask Array, which implement many of the familiar APIs. Operations on Dask collections create a task graph, where each node is a Python function (a task), and data flows from one task to the next. A scheduler then executes the task graph, possibly by making use of parallel computations. Dask includes both a single-machine, and a distributed scheduler, so it is easy to get started on a laptop. Under the hood it uses Numpy and Pandas to execute the actual task computations: a Dask DataFrame is a collection of Pandas DataFrames."
 
 
 ![]({{ site.baseurl }}/images/dask_dataframe.png "Left: A Dask DataFrame with 20M rows partitioned along the rows into 4 Pandas DataFrames. Right: An aggregation operation on the DataFrame datetime index, and the resulting tasks (running using 4 workers on my laptop). Colors denote the different types of tasks, e.g. groupby-sum, dt-hour.")
 
-I decided to try out Dask in a distributed environment, so I followed the instructions on setting up a small Dask cluster on AWS as described in Chapter 11 from [Data Science at Scale with Python and Dask](https://livebook.manning.com/book/data-science-at-scale-with-python-and-Dask/chapter-11/7). The main task for this chapter is to preprocess a dataset (Amazon Fine Foods reviews) using Dask, and develop a bag-of-words model to classify the reviews into positive and negative based on the review text. I implemented my own data pipeline and model using Dask; below are some of the lessons learned along the way. 
-
-## AWS Setup
-
-Here is an overview of the AWS cluster recipe. For detailed instructions on setting it up, refer to the book. 
-
-1. A total of 8 EC2 instances: 6 workers, 1 scheduler, 1 notebook server. Note that the `t2.micro` instances are available in the free tier. 
-2. Docker images for the scheduler, worker, and notebook server deployed using Elastic Container Registry. It is important to ensure all instances are able to communicate with each other, and that we are able to connect to the notebook server, and the scheduler dashboard.
-3. Elastic File System to store the dataset, so that all instances have access to it.
+I decided to try out Dask in a distributed environment, so I followed the instructions on setting up a small Dask cluster on AWS as described in Chapter 11 from [Data Science at Scale with Python and Dask](https://livebook.manning.com/book/data-science-at-scale-with-python-and-Dask/chapter-11/7). I implemented my own data pipeline and model using Dask; below are some of the lessons learned along the way. 
 
 
-## The Dataset
+## Dataset and Objective
+
+The overall objective for the chapter is to preprocess a Food Reviews dataset, and develop a bag-of-words model to classify the reviews into positive and negative based on the review text. 
 
 The dataset includes about half a million reviews of fine foods on Amazon, and can be downloaded from the Stanford [SNAP page](https://snap.stanford.edu/data/web-FineFoods.html). Here is an example review, with only the relevant fields included:
 
@@ -52,11 +44,21 @@ the product as "Jumbo".
 One cannot help but feel sympathetic for those who have to face the blight of unsalted, small-sized peanuts.
 
 
+## AWS Setup
+
+Here is an overview of the AWS cluster recipe. For detailed instructions on setting it up, refer to the book. 
+
+1. A total of 8 EC2 instances: 6 workers, 1 scheduler, 1 notebook server. 
+2. Docker images for the scheduler, worker, and notebook server deployed using Elastic Container Registry. It is important to ensure all instances are able to communicate with each other, and that we are able to connect to the notebook server, and the scheduler dashboard.
+3. Elastic File System to store the dataset, so that all instances have access to it.
+
+{% include info.html text="The t2.micro instances are available in the free tier." %}
+
 ## Lessons Learned
 
 ### Dask Bag for semi-structured data
 
-Semi-structured data like the reviews above or application logs does not conform neatly to a tabular format, so it cannot be loaded directly into a DataFrame or an Array. A [Dask Bag](https://docs.Dask.org/en/latest/bag.html) is a collection of Python objects, so it provides more flexibility when dealing with nested structures or irregular items, which can be modelled using lists or dictionaries. The Bag API exposes `map`, `filter` and other operations which can be used to normalize the data; once this is done, we can convert the Bag to a DataFrame for more intensive numerical transformations or analysis. This is in analogy with how we might use Python dictionaries and lists to transform a raw dataset, before creating a Pandas DataFrame out of it. The key difference is that operations on the Dask bag can be executed in parallel, and on data that does not fit into memory. For example, my initial pipeline for the Reviews dataset was as follows:
+Semi-structured data like the food reviews or application logs does not conform neatly to a tabular format, so it cannot be loaded directly into a DataFrame or an Array. A [Dask Bag](https://docs.Dask.org/en/latest/bag.html) is a collection of Python objects, so it provides more flexibility when dealing with nested structures or irregular items, which can be modelled using lists or dictionaries. The Bag API exposes `map`, `filter` and other operations which can be used to normalize the data; once this is done, we can convert the Bag to a DataFrame for more intensive numerical transformations or analysis. This is in analogy with how we might use Python dictionaries and lists to transform a raw dataset, before creating a Pandas DataFrame out of it. The key difference is that operations on the Dask bag can be executed in parallel, and on data that does not fit into memory. For example, my initial pipeline for the Reviews dataset was as follows:
 
 ```python
 reviews = (bag.from_sequence(locations)
@@ -153,5 +155,4 @@ When transitioning from a single-machine to a distributed setting, inevitably th
 *  [Data Science at Scale with Python and Dask](https://livebook.manning.com/book/data-science-at-scale-with-python-and-Dask/chapter-11/7)
 * [Is Spark still relevant?](https://www.youtube.com/watch?v=obKZzFRNTxo) A comparison between Dask, Spark and Rapids. The main conclusion is that Dask is not behind Spark in terms of functionality, but enterprises still choose Spark because of the training options and support available (e.g. through consultancies) and institutional support.
 * [Dask Delayed Notebook](https://github.com/dask/dask-tutorial/blob/master/01_dask.delayed.ipynb) This tutorial introduces `dask.delayed`, which can be used to parallelize computations that do not easily fit into the DataFrame / Array template. 
-
 
