@@ -6,6 +6,11 @@ permalink: /about/
 
 I am a data scientist based in Vancouver, British Columbia. 
 
+<figure>
+    <img class="docimage" src="{{site.baseurl}}/images/nikolay_mountain.jpg" alt="Nikolay in front of Mount Baker" style="max-width: 60%"/>
+</figure>
+
+
 Here is a list of things that I aspire towards at work. 
 
 As data scientists, we should:
