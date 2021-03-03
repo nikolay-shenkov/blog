@@ -22,14 +22,16 @@ Dask is a distributed computing library written in Python. It includes data coll
 
 ![]({{ site.baseurl }}/images/dask_dataframe.png "Left: A Dask DataFrame with 20M rows partitioned along the rows into 4 Pandas DataFrames. Right: An aggregation operation on the DataFrame datetime index, and the resulting tasks (running using 4 workers on my laptop). Colors denote the different types of tasks, e.g. groupby-sum, dt-hour.")
 
-I decided to try out Dask in a distributed environment, so I followed the instructions on setting up a small Dask cluster on AWS as described in Chapter 11 from [Data Science at Scale with Python and Dask](https://livebook.manning.com/book/data-science-at-scale-with-python-and-Dask/chapter-11/7). I implemented my own data pipeline and model using Dask; below are some of the lessons learned along the way. 
+I decided to try out Dask in a distributed environment, so I followed the instructions on setting up a small Dask cluster on AWS as described in Chapter 11 from [Data Science at Scale with Python and Dask](https://livebook.manning.com/book/data-science-at-scale-with-python-and-Dask/chapter-11/7). Based on this setup and dataset suggested in the book, I implemented my own data pipeline and model using Dask; below are some of the lessons learned along the way. 
 
 
 ## Dataset and Objective
 
-The overall objective for the chapter is to preprocess a Food Reviews dataset, and develop a bag-of-words model to classify the reviews into positive and negative based on the review text. 
+We start with a Food Reviews dataset from Amazon, which can be downloaded from the Stanford [SNAP page](https://snap.stanford.edu/data/web-FineFoods.html). The dataset includes about half a million reviews of fine foods on Amazon.
 
-The dataset includes about half a million reviews of fine foods on Amazon, and can be downloaded from the Stanford [SNAP page](https://snap.stanford.edu/data/web-FineFoods.html). Here is an example review, with only the relevant fields included:
+We use Dask to preprocess the dataset, extract the relevant fields and train a bag-of-words model to classify the reviews into positive and negative based on the review text. 
+
+Here is an example review, with only the relevant fields included:
 
 ```
 product/productId: B00813GRG4
@@ -61,13 +63,25 @@ Here is an overview of the AWS cluster recipe. For detailed instructions on sett
 Semi-structured data like the food reviews or application logs does not conform neatly to a tabular format, so it cannot be loaded directly into a DataFrame or an Array. A [Dask Bag](https://docs.Dask.org/en/latest/bag.html) is a collection of Python objects, so it provides more flexibility when dealing with nested structures or irregular items, which can be modelled using lists or dictionaries. The Bag API exposes `map`, `filter` and other operations which can be used to normalize the data; once this is done, we can convert the Bag to a DataFrame for more intensive numerical transformations or analysis. This is in analogy with how we might use Python dictionaries and lists to transform a raw dataset, before creating a Pandas DataFrame out of it. The key difference is that operations on the Dask bag can be executed in parallel, and on data that does not fit into memory. For example, my initial pipeline for the Reviews dataset was as follows:
 
 ```python
-reviews = (bag.from_sequence(locations)
+
+def get_locations(fname):
+    """Get starting byte locations for each record."""
+    locations = [0]
+    with open(fname, mode='rb') as f:
+        for line in f:  
+            if line == b'\n':
+                locations.append(f.tell())
+    return locations
+
+locs = get_locations(fname)
+location_pairs = [(start, end) for start, end in zip(locs[:-1], locs[1:])]
+reviews = (bag.from_sequence(location_pairs)
               .map(lambda loc: load_item_text(filename, *loc)
               .map(parse_item)
               .to_dataframe(dtypes))
 ```
 
-The input to this pipeline is a sequence of `(start, end)` locations, specified as the number of bytes from the file start, extracted in a previous step. The `load_item_text` will be applied on each location tuple: it will load the corresponding text from the file - more on that later. At this point, we have a bag of text items. The `parse_item` would then convert the text into a usable data structure - I won't go into the specifics here. The `to_dataframe` method creates a Dask DataFrame from the transformed bag. Because of the lazy evaluation of this pipeline, the DataFrame constructor cannot infer the data types of each field in the item so these need to be explicitly provided. More complex pipelines can be implemented by stringing together `map`, `filter`, and `fold` operations in a functional style. 
+The input to this pipeline is a sequence of `(start, end)` location pairs, specified as the number of bytes from file start, extracted in a previous step. The `load_item_text` will be applied on each location pair: it will load the corresponding text from the file - more on that later. At this point, we have a bag of text items. The `parse_item` would then convert the text into a dictionary with the fields parsed - I won't go into the specifics here. The `to_dataframe` method creates a Dask DataFrame from the transformed bag. Because of the lazy evaluation of this pipeline, the DataFrame constructor cannot infer the data types of each field in the item so these need to be explicitly provided, e.g. `{'review/score': np.float}`. More complex pipelines can be implemented by chaining together `map`, `filter`, and `fold` operations in a functional style. 
 
 
 ### The Storage IO bottleneck
@@ -82,9 +96,9 @@ def load_item_text(filename, start, end, encoding='cp1252'):
         return f.read(end - start).decode(encoding)
 ```
 
-This function will be applied about half a milliion times (once for each review), and Dask will take care of distributing the tasks on separate workers. It took more than ten minutes to run the complete pipeline on the AWS cluster. Using the handy [scheduler dashboard](https://docs.Dask.org/en/latest/diagnostics-distributed.html) I noticed that the workers spent most of their time in `load_item_text`. I realized there are possibly two issues with my initial approach: 
+This function will be applied about half a milliion times (once for each review), and Dask will take care of distributing the tasks on separate workers. It took more than ten minutes to run the complete pipeline on the AWS cluster. Using the handy [scheduler dashboard](https://docs.dask.org/en/latest/diagnostics-distributed.html) I noticed that the workers spent most of their time in `load_item_text`. I realized there are possibly two issues with my initial approach: 
 
-* The file needs to be opened and closed once per review
+* The file needs to be opened and closed once per review record
 * For each review we change the position of the file object using `f.seek()`. So each time it will start at `position=0` and move to `position=start`.
 
 To address these issues I updated my code to load a batch of items at once. The updated functions were as follows:
@@ -107,11 +121,11 @@ We now open the filename once per batch. The seek method is still there, but the
 The modified pipeline now looks like this:
 
 ```python
-def locs_to_batches(locations, bs=5000):
-    """Convert the list of locations to batches of locations, of size bs."""
-    return [locations[i:i+bs] for i in range(0, len(locations), bs)]
+def locs_to_batches(locs, bs=5000):
+    """Convert the list of byte locations to batches of size bs."""
+    return [locs[i:i+bs] for i in range(0, len(locs), bs)]
 
-reviews = (bag.from_sequence(locs_to_batches(locations))
+reviews = (bag.from_sequence(locs_to_batches(locs))
               .map(lambda batch: load_batch_items(fname, batch))
               .flatten()
               .map(parse_item)
@@ -124,9 +138,9 @@ I suspect that many distributed processing tasks are limited by storage IO and n
 
 ### Dask DataFrames API != Pandas API
 
-The Dask DataFrame API implements a large subset of the Pandas API, but of course not all operations are supported. Some operations are not implemented because of the data model: Dask DataFrames are partitioned along the rows. Operations such as `transpose` cannot be implemented efficiently because that would require partitioning along columns as well.
+The Dask DataFrame API implements a large subset of the Pandas API, but of course some parts are missing. Some operations are not implemented because of the data model: Dask DataFrames are partitioned along the rows. Operations such as `transpose` cannot be implemented efficiently because that would require partitioning along columns as well.
 
-This also means that using some operations that *are implemented* requires more thought when using. For example, setting the DataFrame index can be costly because it might require shuffling data across partitions. However, it might be worth it if we later take advantage of the index to perform fast lookups. For example, for the reviews dataset, it might be worth to do `reviews.set_index('review_id')` if we plan on joining `reviews` with another table on `review_id`.
+This also means that using operations that *are implemented* requires more thought with Dask. For example, setting the DataFrame index can be costly because it might require shuffling data across partitions. However, it might be worth it if we later take advantage of the index to perform fast lookups. For example, for the reviews dataset, it might be worth to do `reviews.set_index('review_id')` if we plan on joining `reviews` with another table on `review_id`.
 
 ### Dask-ML
 
@@ -148,7 +162,10 @@ I expect future versions of Dask-ML will provide even more features and interope
 
 ## Final thoughts
 
-When transitioning from a single-machine to a distributed setting, inevitably there are new practices to learn, and antipatterns to avoid. With Dask, this transition is relatively smooth: I appreciate that the library is transparant about its operations and that the workflow "remains native" in Python. This also means we can incorporate all the tried-and-tested visualization and ML libraries into our distributed data analysis.
+When transitioning from a single-machine to a distributed setting, there are new practices to learn, and anti-patterns to avoid. With Dask, this transition is relatively smooth: I appreciate that the library is transparant about its operations and that the workflow "remains native" in Python. This also means we can incorporate all the tried-and-tested visualization and ML libraries into our distributed data analysis. My overall recommendation is: 
+
+* If your workflow can fit into a single machine, use Pandas - it will probably end up being faster than distributing the computation. Focus on using Pandas efficiently to resolve any bottlenecks, e.g. using vectorized operations, avoiding `apply` transformations, efficient data IO, etc.
+* On the other hand, if you are working with large datasets in a cloud environment, you might be able to save money by rewriting your workflows into Dask, e.g. you might go from renting a 32GB instance to a 4GB one. 
 
 ## References and Resources
 
