@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>ML Engineering Workflow Tools | Nikolay’s blog</title>
+<meta name="generator" content="Jekyll v4.0.0" />
+<meta property="og:title" content="ML Engineering Workflow Tools" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Overview of a few popular ML Workflow tools" />
+<meta property="og:description" content="Overview of a few popular ML Workflow tools" />
+<link rel="canonical" href="https://nikolay-shenkov.github.io/blog/ml/tools/2021/03/03/ml-ops-tools.html" />
+<meta property="og:url" content="https://nikolay-shenkov.github.io/blog/ml/tools/2021/03/03/ml-ops-tools.html" />
+<meta property="og:site_name" content="Nikolay’s blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-03-03T00:00:00-06:00" />
+<script type="application/ld+json">
+{"description":"Overview of a few popular ML Workflow tools","@type":"BlogPosting","headline":"ML Engineering Workflow Tools","dateModified":"2021-03-03T00:00:00-06:00","url":"https://nikolay-shenkov.github.io/blog/ml/tools/2021/03/03/ml-ops-tools.html","datePublished":"2021-03-03T00:00:00-06:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://nikolay-shenkov.github.io/blog/ml/tools/2021/03/03/ml-ops-tools.html"},"@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/blog/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nikolay-shenkov.github.io/blog/feed.xml" title="Nikolay's blog" /><!-- the google_analytics_id gets auto inserted from the config file -->
+
+
+
+<script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create','UA-173016041-1','auto');ga('require','displayfeatures');ga('send','pageview');</script>
+
+<link rel="shortcut icon" type="image/x-icon" href="/blog/images/favicon.ico"><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>ML Engineering Workflow Tools | Nikolay’s blog</title>
+<meta name="generator" content="Jekyll v4.0.0" />
+<meta property="og:title" content="ML Engineering Workflow Tools" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Overview of a few popular ML Workflow tools" />
+<meta property="og:description" content="Overview of a few popular ML Workflow tools" />
+<link rel="canonical" href="https://nikolay-shenkov.github.io/blog/ml/tools/2021/03/03/ml-ops-tools.html" />
+<meta property="og:url" content="https://nikolay-shenkov.github.io/blog/ml/tools/2021/03/03/ml-ops-tools.html" />
+<meta property="og:site_name" content="Nikolay’s blog" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-03-03T00:00:00-06:00" />
+<script type="application/ld+json">
+{"description":"Overview of a few popular ML Workflow tools","@type":"BlogPosting","headline":"ML Engineering Workflow Tools","dateModified":"2021-03-03T00:00:00-06:00","url":"https://nikolay-shenkov.github.io/blog/ml/tools/2021/03/03/ml-ops-tools.html","datePublished":"2021-03-03T00:00:00-06:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://nikolay-shenkov.github.io/blog/ml/tools/2021/03/03/ml-ops-tools.html"},"@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+<link href="https://unpkg.com/@primer/css/dist/primer.css" rel="stylesheet" />
+<link rel="stylesheet" href="//use.fontawesome.com/releases/v5.0.7/css/all.css"><link type="application/atom+xml" rel="alternate" href="https://nikolay-shenkov.github.io/blog/feed.xml" title="Nikolay's blog" /><!-- the google_analytics_id gets auto inserted from the config file -->
+
+
+
+<script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create','UA-173016041-1','auto');ga('require','displayfeatures');ga('send','pageview');</script>
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" integrity="sha384-zB1R0rpPzHqg7Kpt0Aljp8JPLqbXI3bhnPWROx27a9N0Ll6ZP/+DiW/UqRcLbRjq" crossorigin="anonymous">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"> </script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js" integrity="sha384-y23I5Q6l+B6vatafAwxRu/0oK/79VlbSz7Q9aiSZUvyWYIYsd+qj+o24G5ZU2zJz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js" integrity="sha384-kWPLUVMOks5AQFrykwIup5lo0m3iMkkHrD0uJ4H5cjeGihAutqP0yW0J6dpFiVkI" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/blog/">Nikolay&#39;s blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/blog/about/">About Me</a><a class="page-link" href="/blog/search/">Search</a><a class="page-link" href="/blog/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">ML Engineering Workflow Tools</h1><p class="page-description">Overview of a few popular ML Workflow tools</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-03-03T00:00:00-06:00" itemprop="datePublished">
+        Mar 3, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      2 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/blog/categories/#ml">ml</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/blog/categories/#tools">tools</a>
+        
+      
+      </p>
+    
+
+    </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul class="section-nav">
+<li class="toc-entry toc-h1"><a href="#ml-engineering-workflow-tools">ML Engineering Workflow Tools</a>
+<ul>
+<li class="toc-entry toc-h2"><a href="#why-is-data-science-code-so-messy">Why is Data Science code so messy?</a></li>
+<li class="toc-entry toc-h2"><a href="#quick-overview-of-the-tools">Quick Overview of the Tools</a></li>
+<li class="toc-entry toc-h2"><a href="#dvc">DVC</a></li>
+<li class="toc-entry toc-h2"><a href="#mlflow">MLFlow</a></li>
+<li class="toc-entry toc-h2"><a href="#kedro">Kedro</a></li>
+<li class="toc-entry toc-h2"><a href="#conclusion">Conclusion</a></li>
+<li class="toc-entry toc-h2"><a href="#references">References</a></li>
+</ul>
+</li>
+</ul><h1 id="ml-engineering-workflow-tools">
+<a class="anchor" href="#ml-engineering-workflow-tools" aria-hidden="true"><span class="octicon octicon-link"></span></a>ML Engineering Workflow Tools</h1>
+
+<p>Dozens of ML Workflow tools have been created in the past few years amidst a growing realization that making ML models work in the wild is hard. In this post I overview three of the more popular open-source tools: DVC (Data Version Control), MLFlow, and Kedro.</p>
+
+<h2 id="why-is-data-science-code-so-messy">
+<a class="anchor" href="#why-is-data-science-code-so-messy" aria-hidden="true"><span class="octicon octicon-link"></span></a>Why is Data Science code so messy?</h2>
+
+<p>People often blame Jupyter Notebooks for permitting (and even encouraging?) Data Science messiness but I don’t think notebooks are the main culprit here. A few reasons that come to mind:</p>
+
+<ul>
+  <li>Data Scientists often come from academic research background (i.e. <em>the Physics PhD</em>), as opposed to software development disciplines so many are not experienced in building and maintaining large software projects. It is hard to find good resources on ML Engineering best practices so new Data Scientists have to learn these on the job.</li>
+  <li>There is a mismatch between the engineering workflow (construction) and the data science / research workflow (deconstruction). The engineering workflow centers on building systems that handle complex processes in a reliable and maintainable manner. The research (data science) workflow uses observations from a complex process in attempt to extract the essential characteristics of this processes. While engineers stack together neat Lego bricks, data scientists try to untangle a messy ball of yarn.</li>
+</ul>
+
+<h2 id="quick-overview-of-the-tools">
+<a class="anchor" href="#quick-overview-of-the-tools" aria-hidden="true"><span class="octicon octicon-link"></span></a>Quick Overview of the Tools</h2>
+
+<ul>
+  <li>DVC (Data Version Control) is used in conjunction with Git to version-control datasets. The actual data is typically stored in cloud storage such as S3 and DVC links the stored files and the project. Users interact with dvc via a command line utility (<code class="highlighter-rouge">add</code>, <code class="highlighter-rouge">push</code>, <code class="highlighter-rouge">pull</code>).</li>
+  <li>MLFlow</li>
+  <li>Kedro</li>
+</ul>
+
+<h2 id="dvc">
+<a class="anchor" href="#dvc" aria-hidden="true"><span class="octicon octicon-link"></span></a>DVC</h2>
+
+<p>DVC is conceptually the simplest tool of the three. Datasets change frequently so they need to be versioned and tracked similar to code, if we want reproducible analysis. Version control tools such as Git do not handle well large files so DVC addresses this limitation. The interface is through the command line, for example:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dvc add my_dataset.parquet
+</code></pre></div></div>
+
+<p>will start tracking the dataset <code class="highlighter-rouge">my_dataset.parquet</code>. This command does two important things. First, it creates a small text file <code class="highlighter-rouge">my_dataset.parquet.dvc</code> with the following contents:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>outs:
+- md5: d63513d9b81cb819ac3466b375ef31d
+  size: 2302490
+  path: my_dataset.parquet
+</code></pre></div></div>
+
+<p>This includes the md5 hash of the dataset, its size and the path to the file. The <code class="highlighter-rouge">dvc add</code> command also copies the dataset to a local cache inside a <code class="highlighter-rouge">.dvc</code> folder: <code class="highlighter-rouge">./dvc/cache/d6/3513d9b81cb819ac3466b375ef31d</code> where the folder path is based on the md5 hash above.</p>
+
+<p>The small text file can be committed to git:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git add my_dataset.parquet.dvc .gitignore
+git commit -m "Add my dataset"
+</code></pre></div></div>
+
+<p>while the actual cached dataset can be pushed to a cloud storage of our choice using:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dvc push
+</code></pre></div></div>
+
+<p>and conversely <code class="highlighter-rouge">dvc pull</code> to download it from the remote. You can find details on how to configure dvc with your cloud storage in their <a href="https://dvc.org/doc/start/data-versioning">tutorial</a>.</p>
+
+<p>Personally, I tend to generate a lot of datasets (and dataset versions) when doing analysis and research so I find DVC very helpful. It is unobtrusive via its command-line interface - there is no need to change any of the existing code.</p>
+
+<h2 id="mlflow">
+<a class="anchor" href="#mlflow" aria-hidden="true"><span class="octicon octicon-link"></span></a>MLFlow</h2>
+
+<h2 id="kedro">
+<a class="anchor" href="#kedro" aria-hidden="true"><span class="octicon octicon-link"></span></a>Kedro</h2>
+
+<h2 id="conclusion">
+<a class="anchor" href="#conclusion" aria-hidden="true"><span class="octicon octicon-link"></span></a>Conclusion</h2>
+
+<h2 id="references">
+<a class="anchor" href="#references" aria-hidden="true"><span class="octicon octicon-link"></span></a>References</h2>
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="nikolay-shenkov/blog"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/blog/ml/tools/2021/03/03/ml-ops-tools.html" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/blog/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/blog/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/blog/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>A blog about data science sprinkled with a bit of sarcasm.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/nikolay-shenkov" title="nikolay-shenkov"><svg class="svg-icon grey"><use xlink:href="/blog/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
