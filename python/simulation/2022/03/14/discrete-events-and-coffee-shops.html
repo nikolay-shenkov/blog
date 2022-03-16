@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Discrete Events and Coffee Shops | Nikolay’s blog</title>
+<meta name="generator" content="Jekyll v4.0.0" />
+<meta property="og:title" content="Discrete Events and Coffee Shops" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A blog about data science sprinkled with a bit of sarcasm." />
+<meta property="og:description" content="A blog about data science sprinkled with a bit of sarcasm." />
+<link rel="canonical" href="https://nikolay-shenkov.github.io/blog/python/simulation/2022/03/14/discrete-events-and-coffee-shops.html" />
+<meta property="og:url" content="https://nikolay-shenkov.github.io/blog/python/simulation/2022/03/14/discrete-events-and-coffee-shops.html" />
+<meta property="og:site_name" content="Nikolay’s blog" />
+<meta property="og:image" content="https://nikolay-shenkov.github.io/blog/images/order_coffee.png" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-03-14T00:00:00-05:00" />
+<script type="application/ld+json">
+{"description":"A blog about data science sprinkled with a bit of sarcasm.","@type":"BlogPosting","headline":"Discrete Events and Coffee Shops","dateModified":"2022-03-14T00:00:00-05:00","datePublished":"2022-03-14T00:00:00-05:00","url":"https://nikolay-shenkov.github.io/blog/python/simulation/2022/03/14/discrete-events-and-coffee-shops.html","mainEntityOfPage":{"@type":"WebPage","@id":"https://nikolay-shenkov.github.io/blog/python/simulation/2022/03/14/discrete-events-and-coffee-shops.html"},"image":"https://nikolay-shenkov.github.io/blog/images/order_coffee.png","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/blog/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nikolay-shenkov.github.io/blog/feed.xml" title="Nikolay's blog" /><!-- the google_analytics_id gets auto inserted from the config file -->
+
+
+
+<script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create','UA-173016041-1','auto');ga('require','displayfeatures');ga('send','pageview');</script>
+
+<link rel="shortcut icon" type="image/x-icon" href="/blog/images/favicon.ico"><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Discrete Events and Coffee Shops | Nikolay’s blog</title>
+<meta name="generator" content="Jekyll v4.0.0" />
+<meta property="og:title" content="Discrete Events and Coffee Shops" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A blog about data science sprinkled with a bit of sarcasm." />
+<meta property="og:description" content="A blog about data science sprinkled with a bit of sarcasm." />
+<link rel="canonical" href="https://nikolay-shenkov.github.io/blog/python/simulation/2022/03/14/discrete-events-and-coffee-shops.html" />
+<meta property="og:url" content="https://nikolay-shenkov.github.io/blog/python/simulation/2022/03/14/discrete-events-and-coffee-shops.html" />
+<meta property="og:site_name" content="Nikolay’s blog" />
+<meta property="og:image" content="https://nikolay-shenkov.github.io/blog/images/order_coffee.png" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-03-14T00:00:00-05:00" />
+<script type="application/ld+json">
+{"description":"A blog about data science sprinkled with a bit of sarcasm.","@type":"BlogPosting","headline":"Discrete Events and Coffee Shops","dateModified":"2022-03-14T00:00:00-05:00","datePublished":"2022-03-14T00:00:00-05:00","url":"https://nikolay-shenkov.github.io/blog/python/simulation/2022/03/14/discrete-events-and-coffee-shops.html","mainEntityOfPage":{"@type":"WebPage","@id":"https://nikolay-shenkov.github.io/blog/python/simulation/2022/03/14/discrete-events-and-coffee-shops.html"},"image":"https://nikolay-shenkov.github.io/blog/images/order_coffee.png","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+<link href="https://unpkg.com/@primer/css/dist/primer.css" rel="stylesheet" />
+<link rel="stylesheet" href="//use.fontawesome.com/releases/v5.0.7/css/all.css"><link type="application/atom+xml" rel="alternate" href="https://nikolay-shenkov.github.io/blog/feed.xml" title="Nikolay's blog" /><!-- the google_analytics_id gets auto inserted from the config file -->
+
+
+
+<script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create','UA-173016041-1','auto');ga('require','displayfeatures');ga('send','pageview');</script>
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css" integrity="sha384-zB1R0rpPzHqg7Kpt0Aljp8JPLqbXI3bhnPWROx27a9N0Ll6ZP/+DiW/UqRcLbRjq" crossorigin="anonymous">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"> </script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js" integrity="sha384-y23I5Q6l+B6vatafAwxRu/0oK/79VlbSz7Q9aiSZUvyWYIYsd+qj+o24G5ZU2zJz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js" integrity="sha384-kWPLUVMOks5AQFrykwIup5lo0m3iMkkHrD0uJ4H5cjeGihAutqP0yW0J6dpFiVkI" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/blog/">Nikolay&#39;s blog</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/blog/about/">About Me</a><a class="page-link" href="/blog/search/">Search</a><a class="page-link" href="/blog/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Discrete Events and Coffee Shops</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-03-14T00:00:00-05:00" itemprop="datePublished">
+        Mar 14, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      1 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/blog/categories/#python">python</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/blog/categories/#simulation">simulation</a>
+        
+      
+      </p>
+    
+
+    
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Discrete-event-simulation">Discrete-event simulation </a></li>
+<li class="toc-entry toc-h2"><a href="#Simpy">Simpy </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-03-14-discrete-events-and-coffee-shops.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><figure>
+  
+    <img class="docimage" src="/blog/images/copied_from_nb/../images/cafe_greco_passini.jpg" alt="A painting of an old cafe in Rome.">
+    
+    
+</figure>
+</p>
+<p><em>Ludwig Passini - Cafe Greco</em>. Depicted is one of the oldest cafes in Rome, first opened in 1760.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Discrete-event-simulation">
+<a class="anchor" href="#Discrete-event-simulation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Discrete-event simulation<a class="anchor-link" href="#Discrete-event-simulation"> </a>
+</h2>
+<p>In a discrete-event simulation we model a system as a sequence of events that occur at discrete times. For example, in a grocery queue, the events might be: customer lines up at the queue, customer reaches cashier, and completes transactions. The entire system is modeled via events and no other state change occurs between events.</p>
+<p>Discrete event simulations have a large number of applications in logistics, operations and many others. They can be a useful addition in a data scientist's toolbelt.</p>
+<h2 id="Simpy">
+<a class="anchor" href="#Simpy" aria-hidden="true"><span class="octicon octicon-link"></span></a>Simpy<a class="anchor-link" href="#Simpy"> </a>
+</h2>
+<p>Simpy is a Python package for discrete-event simulation. The package provides three main constructs: events, processes and resources. We will discuss resources in the Coffee Shop simulation, below we illustrate the first two constructs.</p>
+<p>Processes model components of a system by emitting events. Processes are defined by a Python generator. A generator allows for the temporary suspension of a process, and it makes it very convenient to model various components. Here is an example:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">simpy</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">worker</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">worker_id</span><span class="p">,</span> <span class="n">time_to_complete</span><span class="p">):</span>
+    <span class="sd">"""A worker finishes a part every time_to_complete minutes"""</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">time_to_complete</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"worker </span><span class="si">{</span><span class="n">worker_id</span><span class="si">}</span><span class="s2"> finished </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> parts at </span><span class="si">{</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+<span class="n">env</span> <span class="o">=</span> <span class="n">simpy</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
+<span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">worker</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">worker_id</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">time_to_complete</span><span class="o">=</span><span class="mi">20</span><span class="p">))</span>
+<span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">worker</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">worker_id</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">time_to_complete</span><span class="o">=</span><span class="mi">30</span><span class="p">))</span>
+<span class="n">env</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">until</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>worker 1 finished 1 parts at 20
+worker 2 finished 1 parts at 30
+worker 1 finished 2 parts at 40
+worker 2 finished 2 parts at 60
+worker 1 finished 3 parts at 60
+worker 1 finished 4 parts at 80
+worker 2 finished 3 parts at 90
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Above we create two worker processes. A worker simply takes <code>time_to_complete</code> minutes to complete a part. The "waiting" part is determined by a simpy Timeout event, which allows for simulation time to pass. When the timeout is complete (the event has been processed), the worker process is resumed and the entire procedure repeats.</p>
+<p>Note that the two workers are running concurrently. The simpy environment keeps track of events in an event queue and will resume the appropriate process once an event has been processed.</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="nikolay-shenkov/blog"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/blog/python/simulation/2022/03/14/discrete-events-and-coffee-shops.html" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/blog/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/blog/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/blog/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>A blog about data science sprinkled with a bit of sarcasm.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/nikolay-shenkov" target="_blank" title="nikolay-shenkov"><svg class="svg-icon grey"><use xlink:href="/blog/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
