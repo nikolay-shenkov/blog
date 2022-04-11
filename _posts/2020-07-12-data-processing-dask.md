@@ -2,6 +2,7 @@
 toc: true
 layout: post
 comments: true
+image: images/dask_dataframe_small.png
 description: I share some of my initial takeaways on working with Dask for distributed processing.
 categories: [dask, distributed-processing]
 title: "Distributed data processing with Dask: lessons learned"
